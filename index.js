@@ -27,6 +27,9 @@ async function run() {
     // await client.connect();
     const userCollection = client.db("BuildiFyDb").collection("Users");
     const apartMentCollection = client.db("BuildiFyDb").collection("Apatments");
+    const agreeMentCollection = client
+      .db("BuildiFyDb")
+      .collection("Agreements");
 
     //User Api
     app.post("/users", async (req, res) => {
@@ -46,6 +49,14 @@ async function run() {
 
     app.get("/apartments", async (req, res) => {
       const result = await apartMentCollection.find().toArray();
+      res.send(result);
+    });
+
+    //AgreeMent Api
+
+    app.post("/agreements", async (req, res) => {
+      const agreeItems = req.body;
+      const result = await agreeMentCollection.insertOne(agreeItems);
       res.send(result);
     });
 
