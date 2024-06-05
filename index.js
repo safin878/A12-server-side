@@ -38,6 +38,21 @@ async function run() {
       res.json(result);
     });
 
+    //get user info by email
+    app.get("/users/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const user = await userCollection.findOne(query);
+      res.send(user);
+    });
+
+    //get user info by email
+    app.get("/members", async (req, res) => {
+      const query = { role: "member" };
+      const user = await userCollection.find(query).toArray();
+      res.send(user);
+    });
+
     //ApartMent Api
     app.get("/apartments", async (req, res) => {
       try {
