@@ -46,6 +46,44 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/agreements", async (req, res) => {
+      const result = await agreeMentCollection.find().toArray();
+      res.send(result);
+    });
+
+    app.patch("/agreements/:id", async (req, res) => {
+      const { id } = req.params;
+      const { status } = req.body;
+      try {
+        const result = await agreeMentCollection.updateOne(
+          { _id: new ObjectId(id) },
+          { $set: { status } }
+        );
+        res.send(result);
+      } catch (error) {
+        console.error("Failed to update agreement status:", error);
+        res.status(500).send("Failed to update agreement status");
+      }
+    });
+
+    app.patch("/users/updates/:email", async (req, res) => {
+      const email = req.params.email;
+      const { role } = req.body;
+      const updateDoc = {
+        $set: {
+          role,
+        },
+      };
+
+      try {
+        const result = await userCollection.updateOne({ email }, updateDoc);
+        res.send(result);
+      } catch (error) {
+        console.error("Failed to update user role:", error);
+        res.status(500).send("Failed to update user role");
+      }
+    });
+
     //get user info by email
     app.get("/users/:email", async (req, res) => {
       const email = req.params.email;
