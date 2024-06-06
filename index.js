@@ -38,12 +38,39 @@ async function run() {
       res.json(result);
     });
 
+    //agreement api
+
+    app.post("/agreements", async (req, res) => {
+      const user = req.body;
+      const result = await agreeMentCollection.insertOne(user);
+      res.send(result);
+    });
+
     //get user info by email
     app.get("/users/:email", async (req, res) => {
       const email = req.params.email;
       const query = { email: email };
       const user = await userCollection.findOne(query);
       res.send(user);
+    });
+
+    //user role updated
+
+    app.patch("/users/update/:email", async (req, res) => {
+      const email = req.params.email;
+      const updateDoc = {
+        $set: {
+          role: "user",
+        },
+      };
+
+      try {
+        const result = await userCollection.updateOne({ email }, updateDoc);
+        res.send(result);
+      } catch (error) {
+        console.error("Failed to update user role:", error);
+        res.status(500).send("Failed to update user role");
+      }
     });
 
     //get user info by email
