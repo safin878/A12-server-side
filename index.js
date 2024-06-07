@@ -23,6 +23,9 @@ async function run() {
     const userCollection = client.db("BuildiFyDb").collection("Users");
     const apartMentCollection = client.db("BuildiFyDb").collection("Apatments");
     const couponCollection = client.db("BuildiFyDb").collection("Coupons");
+    const announcementCollection = client
+      .db("BuildiFyDb")
+      .collection("Announcement");
     const agreeMentCollection = client
       .db("BuildiFyDb")
       .collection("Agreements");
@@ -54,11 +57,11 @@ async function run() {
 
     app.patch("/agreements/:id", async (req, res) => {
       const { id } = req.params;
-      const { status } = req.body;
+      const { status, checkedDate } = req.body;
       try {
         const result = await agreeMentCollection.updateOne(
           { _id: new ObjectId(id) },
-          { $set: { status } }
+          { $set: { status, checkedDate } }
         );
         res.send(result);
       } catch (error) {
@@ -150,8 +153,6 @@ async function run() {
       }
     });
 
-    //Coupon Api
-
     // Coupon API
     app.post("/coupons", async (req, res) => {
       const { couponCode, discountPercentage, couponDescription } = req.body;
@@ -178,6 +179,13 @@ async function run() {
 
     app.get("/coupons", async (req, res) => {
       const result = await couponCollection.find().toArray();
+      res.send(result);
+    });
+
+    //Make Announcement
+    app.post("/announcement", async (req, res) => {
+      const user = req.body;
+      const result = await announcementCollection.insertOne(user);
       res.send(result);
     });
 
