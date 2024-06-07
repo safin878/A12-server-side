@@ -22,6 +22,7 @@ async function run() {
   try {
     const userCollection = client.db("BuildiFyDb").collection("Users");
     const apartMentCollection = client.db("BuildiFyDb").collection("Apatments");
+    const couponCollection = client.db("BuildiFyDb").collection("Coupons");
     const agreeMentCollection = client
       .db("BuildiFyDb")
       .collection("Agreements");
@@ -147,6 +148,37 @@ async function run() {
         console.error("Error fetching apartments count:", error);
         res.status(500).send("Server error");
       }
+    });
+
+    //Coupon Api
+
+    // Coupon API
+    app.post("/coupons", async (req, res) => {
+      const { couponCode, discountPercentage, couponDescription } = req.body;
+
+      // Validate the inputs
+      if (!couponCode || !discountPercentage || !couponDescription) {
+        return res.status(400).send({ message: "All fields are required" });
+      }
+
+      const newCoupon = {
+        couponCode,
+        discountPercentage: parseFloat(discountPercentage), // Ensure it's a number
+        couponDescription,
+      };
+
+      try {
+        const result = await couponCollection.insertOne(newCoupon);
+        res.status(201).send(result);
+      } catch (error) {
+        console.error("Error inserting coupon:", error);
+        res.status(500).send({ message: "Error inserting coupon" });
+      }
+    });
+
+    app.get("/coupons", async (req, res) => {
+      const result = await couponCollection.find().toArray();
+      res.send(result);
     });
 
     // Send a ping to confirm a successful connection
