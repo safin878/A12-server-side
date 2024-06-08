@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const cors = require("cors");
 require("dotenv").config();
+const stripe = require("stripe")(process.env.STRIPE_KEY);
 const port = process.env.PORT || 5000;
 
 app.use(cors());
@@ -187,6 +188,74 @@ async function run() {
       const user = req.body;
       const result = await announcementCollection.insertOne(user);
       res.send(result);
+    });
+
+    //agreement
+
+    app.get("/carts/:email", async (req, res) => {
+      const email = req.params.email;
+
+      const query = { email: email };
+      const result = await agreeMentCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    //Payment intent
+
+    // app.post("/create-intent", async (req, res) => {
+    //   const { price } = req.body;
+    //   const amount = parseInt(price * 100); // Convert to cents
+
+    //   // Check if the amount is above the minimum threshold
+    //   const minimumChargeAmount = 50; // Example minimum amount in cents ($0.50)
+    //   if (amount < minimumChargeAmount) {
+    //     return res.status(400).send({
+    //       message: `The amount must be at least $${minimumChargeAmount / 100}.`,
+    //     });
+    //   }
+
+    //   try {
+    //     const paymentIntent = await stripe.paymentIntents.create({
+    //       amount,
+    //       currency: "usd",
+    //       payment_method_types: ["card"],
+    //     });
+
+    //     res.send({
+    //       clientSecret: paymentIntent.client_secret,
+    //     });
+    //   } catch (error) {
+    //     console.error("Error creating payment intent:", error);
+    //     res.status(500).send({ message: "Error creating payment intent" });
+    //   }
+    // });
+
+    app.post("/create-intent", async (req, res) => {
+      const { price } = req.body;
+      const amount = parseInt(price * 100); // Convert to cents
+
+      // Check if the amount is above the minimum threshold
+      const minimumChargeAmount = 50; // Example minimum amount in cents ($0.50)
+      if (amount < minimumChargeAmount) {
+        return res.status(400).send({
+          message: `The amount must be at least $${minimumChargeAmount / 100}.`,
+        });
+      }
+
+      try {
+        const paymentIntent = await stripe.paymentIntents.create({
+          amount,
+          currency: "usd",
+          payment_method_types: ["card"],
+        });
+
+        res.send({
+          clientSecret: paymentIntent.client_secret,
+        });
+      } catch (error) {
+        console.error("Error creating payment intent:", error);
+        res.status(500).send({ message: "Error creating payment intent" });
+      }
     });
 
     // Send a ping to confirm a successful connection
