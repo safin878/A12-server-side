@@ -31,6 +31,9 @@ async function run() {
     const agreeMentCollection = client
       .db("BuildiFyDb")
       .collection("Agreements");
+    const agreeMentInfoCollection = client
+      .db("BuildiFyDb")
+      .collection("AgreementsInfo");
 
     //User Api
     app.post("/users", async (req, res) => {
@@ -46,9 +49,25 @@ async function run() {
 
     //agreement api
 
+    // app.post("/agreements", async (req, res) => {
+    //   const user = req.body;
+    //   const result = await agreeMentCollection.insertOne(user);
+    //   res.send(result);
+    // });
+
     app.post("/agreements", async (req, res) => {
-      const user = req.body;
-      const result = await agreeMentCollection.insertOne(user);
+      const { email } = req.body;
+
+      // Check if an agreement already exists for the email
+      const existingAgreement = await agreeMentCollection.findOne({ email });
+      if (existingAgreement) {
+        return res.status(400).send({
+          message:
+            "Action not permitted: Agreement already exists for this email.",
+        });
+      }
+
+      const result = await agreeMentCollection.insertOne(req.body);
       res.send(result);
     });
 
@@ -73,6 +92,28 @@ async function run() {
       } catch (error) {
         console.error("Failed to update agreement status:", error);
         res.status(500).send("Failed to update agreement status");
+      }
+    });
+
+    app.post("/agreementsInfo", async (req, res) => {
+      const { FloorNo, BlockName, ApartmentNo, email, checkedDate } = req.body;
+
+      const newAgreementInfo = {
+        FloorNo,
+        BlockName,
+        ApartmentNo,
+        email,
+        checkedDate,
+      };
+
+      try {
+        const result = await agreeMentInfoCollection.insertOne(
+          newAgreementInfo
+        );
+        res.status(201).send(result);
+      } catch (error) {
+        console.error("Error inserting agreement info:", error);
+        res.status(500).send({ message: "Error inserting agreement info" });
       }
     });
 
@@ -202,6 +243,14 @@ async function run() {
 
       const query = { email: email };
       const result = await agreeMentCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    app.get("/agreeInfo/:email", async (req, res) => {
+      const email = req.params.email;
+
+      const query = { email: email };
+      const result = await agreeMentInfoCollection.find(query).toArray();
       res.send(result);
     });
 
