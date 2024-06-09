@@ -56,6 +56,10 @@ async function run() {
       const result = await agreeMentCollection.find().toArray();
       res.send(result);
     });
+    app.get("/announcement", async (req, res) => {
+      const result = await announcementCollection.find().toArray();
+      res.send(result);
+    });
 
     app.patch("/agreements/:id", async (req, res) => {
       const { id } = req.params;
