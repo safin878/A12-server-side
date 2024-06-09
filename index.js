@@ -24,6 +24,7 @@ async function run() {
     const userCollection = client.db("BuildiFyDb").collection("Users");
     const apartMentCollection = client.db("BuildiFyDb").collection("Apatments");
     const couponCollection = client.db("BuildiFyDb").collection("Coupons");
+    const paymentsCollection = client.db("BuildiFyDb").collection("Payments");
     const announcementCollection = client
       .db("BuildiFyDb")
       .collection("Announcement");
@@ -200,35 +201,20 @@ async function run() {
       res.send(result);
     });
 
-    //Payment intent
-
-    // app.post("/create-intent", async (req, res) => {
-    //   const { price } = req.body;
-    //   const amount = parseInt(price * 100); // Convert to cents
-
-    //   // Check if the amount is above the minimum threshold
-    //   const minimumChargeAmount = 50; // Example minimum amount in cents ($0.50)
-    //   if (amount < minimumChargeAmount) {
-    //     return res.status(400).send({
-    //       message: `The amount must be at least $${minimumChargeAmount / 100}.`,
-    //     });
-    //   }
-
-    //   try {
-    //     const paymentIntent = await stripe.paymentIntents.create({
-    //       amount,
-    //       currency: "usd",
-    //       payment_method_types: ["card"],
-    //     });
-
-    //     res.send({
-    //       clientSecret: paymentIntent.client_secret,
-    //     });
-    //   } catch (error) {
-    //     console.error("Error creating payment intent:", error);
-    //     res.status(500).send({ message: "Error creating payment intent" });
-    //   }
-    // });
+    //PAyment info
+    app.post("/payments", async (req, res) => {
+      const payment = req.body;
+      const PaymentResult = await paymentsCollection.insertOne(payment);
+      //carefully Deleted items In The Cart
+      // console.log("payment info", payment);
+      // const query = {
+      //   _id: {
+      //     $in: payment.cartIds.map((id) => new ObjectId(id)),
+      //   },
+      // };
+      // const deleteResult = await cartCollection.deleteMany(query);
+      res.send(PaymentResult);
+    });
 
     app.post("/create-intent", async (req, res) => {
       const { price } = req.body;
@@ -255,6 +241,50 @@ async function run() {
       } catch (error) {
         console.error("Error creating payment intent:", error);
         res.status(500).send({ message: "Error creating payment intent" });
+      }
+    });
+
+    app.post("/validate-coupon", async (req, res) => {
+      const { couponCode } = req.body;
+      try {
+        const coupon = await couponCollection.findOne({ couponCode });
+        if (coupon) {
+          res.send({
+            valid: true,
+            discountPercentage: coupon.discountPercentage,
+          });
+        } else {
+          res.send({ valid: false });
+        }
+      } catch (error) {
+        console.error("Error validating coupon code:", error);
+        res.status(500).send({ message: "Error validating coupon code" });
+      }
+    });
+
+    //Payment History
+    // app.get("/history/:email", async (req, res) => {
+    //   const email = req.params.email;
+    //   const query = { email: email };
+    //   const result = await paymentsCollection.find(query).toArray();
+    //   res.send(result);
+    // });
+
+    app.get("/history/:email", async (req, res) => {
+      const email = req.params.email;
+      const month = req.query.month;
+      let query = { email: email };
+
+      if (month) {
+        query.month = { $regex: new RegExp(month, "i") };
+      }
+
+      try {
+        const result = await paymentsCollection.find(query).toArray();
+        res.send(result);
+      } catch (error) {
+        console.error("Failed to fetch payment history:", error);
+        res.status(500).send("Failed to fetch payment history");
       }
     });
 
