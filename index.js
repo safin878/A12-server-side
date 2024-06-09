@@ -341,6 +341,60 @@ async function run() {
       }
     });
 
+    //Update
+
+    // Coupon API - Update Coupon
+    app.patch("/coupons/:id", async (req, res) => {
+      const couponId = req.params.id;
+      const { couponCode, discountPercentage, couponDescription } = req.body;
+
+      // Validate the inputs
+      if (!couponCode || !discountPercentage || !couponDescription) {
+        return res.status(400).send({ message: "All fields are required" });
+      }
+
+      const updatedCoupon = {
+        couponCode,
+        discountPercentage: parseFloat(discountPercentage), // Ensure it's a number
+        couponDescription,
+      };
+
+      try {
+        const result = await couponCollection.updateOne(
+          { _id: new ObjectId(couponId) },
+          { $set: updatedCoupon }
+        );
+
+        if (result.modifiedCount === 0) {
+          return res.status(404).send({ message: "Coupon not found" });
+        }
+
+        res.send({ message: "Coupon updated successfully" });
+      } catch (error) {
+        console.error("Error updating coupon:", error);
+        res.status(500).send({ message: "Error updating coupon" });
+      }
+    });
+
+    app.delete("/coupons/:id", async (req, res) => {
+      const couponId = req.params.id;
+
+      try {
+        const result = await couponCollection.deleteOne({
+          _id: new ObjectId(couponId),
+        });
+
+        if (result.deletedCount === 0) {
+          return res.status(404).send({ message: "Coupon not found" });
+        }
+
+        res.send({ message: "Coupon deleted successfully" });
+      } catch (error) {
+        console.error("Error deleting coupon:", error);
+        res.status(500).send({ message: "Error deleting coupon" });
+      }
+    });
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
