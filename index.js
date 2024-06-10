@@ -49,12 +49,6 @@ async function run() {
 
     //agreement api
 
-    // app.post("/agreements", async (req, res) => {
-    //   const user = req.body;
-    //   const result = await agreeMentCollection.insertOne(user);
-    //   res.send(result);
-    // });
-
     app.post("/agreements", async (req, res) => {
       const { email } = req.body;
 
@@ -77,6 +71,15 @@ async function run() {
     });
     app.get("/announcement", async (req, res) => {
       const result = await announcementCollection.find().toArray();
+      res.send(result);
+    });
+    app.get("/users", async (req, res) => {
+      const result = await userCollection.find().toArray();
+      res.send(result);
+    });
+    app.get("/members", async (req, res) => {
+      const query = { role: "member" };
+      const result = await userCollection.find(query).toArray();
       res.send(result);
     });
 
@@ -255,18 +258,32 @@ async function run() {
     });
 
     //PAyment info
+    // app.post("/payments", async (req, res) => {
+    //   const payment = req.body;
+    //   const PaymentResult = await paymentsCollection.insertOne(payment);
+
+    //   res.send(PaymentResult);
+    // });
+
+    // Payment info
     app.post("/payments", async (req, res) => {
       const payment = req.body;
       const PaymentResult = await paymentsCollection.insertOne(payment);
-      //carefully Deleted items In The Cart
-      // console.log("payment info", payment);
-      // const query = {
-      //   _id: {
-      //     $in: payment.cartIds.map((id) => new ObjectId(id)),
-      //   },
-      // };
-      // const deleteResult = await cartCollection.deleteMany(query);
-      res.send(PaymentResult);
+
+      if (PaymentResult.insertedId) {
+        // Data was successfully inserted into paymentsCollection
+        const deleteResult = await agreeMentCollection.deleteOne({
+          _id: new ObjectId(payment.cartId),
+        });
+
+        if (deleteResult.deletedCount === 1) {
+          res.send(PaymentResult);
+        } else {
+          res.status(500).send({ message: "Failed to remove agreement data" });
+        }
+      } else {
+        res.status(500).send({ message: "Failed to store payment data" });
+      }
     });
 
     app.post("/create-intent", async (req, res) => {
@@ -402,7 +419,6 @@ async function run() {
     );
   } finally {
     // Ensures that the client will close when you finish/error
-    // await client.close();
   }
 }
 run().catch(console.dir);
